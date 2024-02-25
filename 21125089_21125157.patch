@@ -1,3 +1,29 @@
+diff --git a/.vscode/c_cpp_properties.json b/.vscode/c_cpp_properties.json
+new file mode 100644
+index 0000000..edcc6ce
+--- /dev/null
++++ b/.vscode/c_cpp_properties.json
+@@ -0,0 +1,19 @@
++{
++    "configurations": [
++        {
++            "name": "Mac",
++            "includePath": [
++                "${default}",
++                "${workspaceFolder}"
++            ],
++            "defines": [],
++            "macFrameworkPath": [
++                "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks"
++            ],
++            "cStandard": "c17",
++            "cppStandard": "c++17",
++            "intelliSenseMode": "macos-clang-arm64"
++        }
++    ],
++    "version": 4
++}
+\ No newline at end of file
 diff --git a/.vscode/settings.json b/.vscode/settings.json
 new file mode 100644
 index 0000000..143541e
@@ -11,6 +37,9 @@ index 0000000..143541e
 +    }
 +}
 \ No newline at end of file
+diff --git a/21125089_21125157.patch b/21125089_21125157.patch
+new file mode 100644
+index 0000000..e69de29
 diff --git a/Makefile b/Makefile
 index 365c91b..4f3fd54 100644
 --- a/Makefile
@@ -29,11 +58,11 @@ index 365c91b..4f3fd54 100644
  
 diff --git a/time.txt b/time.txt
 new file mode 100644
-index 0000000..e45f4bd
+index 0000000..9a03714
 --- /dev/null
 +++ b/time.txt
 @@ -0,0 +1 @@
-+10wb
++10
 \ No newline at end of file
 diff --git a/user/find.c b/user/find.c
 new file mode 100644
@@ -138,38 +167,41 @@ index 0000000..b7c5a0d
 \ No newline at end of file
 diff --git a/user/pingpong.c b/user/pingpong.c
 new file mode 100644
-index 0000000..4374e79
+index 0000000..1251439
 --- /dev/null
 +++ b/user/pingpong.c
-@@ -0,0 +1,29 @@
+@@ -0,0 +1,32 @@
 +#include "kernel/types.h"
 +#include "kernel/stat.h"
 +#include "user/user.h"
 +
-+int main( int argc, char *argv[] ) {
-+    
-+    if( argc != 1 ) {
-+        fprintf( 2, "Usage: pingpong\n\n" );
-+        exit(1);
-+    }
-+
-+    int parent_to_child[2], child_to_parent[2];
-+    
-+    pipe(parent_to_child);
-+    pipe(child_to_parent);
-+
-+    if( fork() == 0 ) {
-+        char* buffer[10] = {0};
-+        if( read( parent_to_child[0], buffer, 4 ) > 0 ) fprintf( 1, "%d: received %s\n", getpid(), buffer );
-+        write( child_to_parent[1], "pong", 4 );
++int main()
++{
++    int pc[2], cp[2];
++    pipe(pc);
++    pipe(cp);
++    char *ping = "ping";
++    char *pong = "pong";
++    char buf[512] = {0};
++    int child_id = fork();
++    if (child_id != 0)
++    {
++        close(pc[0]);
++        close(cp[1]);
++        write(pc[1], ping, strlen(ping));
++        read(cp[0], buf, sizeof(buf));
++        printf("%d: received %s\n", getpid(), buf);
 +        exit(0);
 +    }
-+
-+    char* _buffer[10] = {0};
-+    write( parent_to_child[1], "ping", 4 );
-+    if( read( child_to_parent[0], _buffer, 4 ) > 0 ) fprintf( 1, "%d: received %s\n", getpid(), _buffer );
-+    
-+    exit(0);
++    else
++    {
++        close(pc[1]);
++        close(cp[0]);
++        read(pc[0], buf, sizeof(buf));
++        printf("%d: received %s\n", getpid(), buf);
++        write(cp[1], pong, strlen(pong));
++        exit(0);
++    }
 +}
 \ No newline at end of file
 diff --git a/user/primes.c b/user/primes.c
@@ -228,27 +260,24 @@ index 0000000..25d7b0d
 \ No newline at end of file
 diff --git a/user/sleep.c b/user/sleep.c
 new file mode 100644
-index 0000000..8724c2d
+index 0000000..9c90a2b
 --- /dev/null
 +++ b/user/sleep.c
-@@ -0,0 +1,16 @@
+@@ -0,0 +1,14 @@
 +#include "kernel/types.h"
-+#include "kernel/stat.h"
-+#include "user/user.h"
++#include "user.h"
 +
-+int main( int argc, char *argv[] ) {
-+    
-+    if( argc != 2 ) {
-+        fprintf( 2, "Usage: sleep time\n\n" );
++int main(int argc, char *argv[])
++{
++    if (argc != 2)
++    {
++        fprintf(2, "Usage: sleep sec\n\n");
 +        exit(1);
 +    }
-+
-+    int second = atoi( argv[1] );
-+    sleep( second * 10 );
-+    
++    int sec = atoi(argv[1]);
++    sleep( sec * 10 );
 +    exit(0);
 +}
-\ No newline at end of file
 diff --git a/user/xargs.c b/user/xargs.c
 new file mode 100644
 index 0000000..f982f34

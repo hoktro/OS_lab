@@ -9,6 +9,6 @@ int main(int argc, char *argv[])
         exit(1);
     }
     int sec = atoi(argv[1]);
-    sleep(sec);
+    sleep( sec * 10 );
     exit(0);
 }
