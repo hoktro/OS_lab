@@ -294,7 +294,10 @@ fork(void)
     release(&np->lock);
     return -1;
   }
+  
+  // Transfer data from parent to child
   np->sz = p->sz;
+  np->mask = p->mask;
 
   // copy saved user registers.
   *(np->trapframe) = *(p->trapframe);
@@ -685,4 +688,12 @@ procdump(void)
     printf("%d %s %s", p->pid, state, p->name);
     printf("\n");
   }
+}
+
+
+// Count the number of processes whose state is not UNUSED
+uint64 nprocess(void) {
+  int result = 0;
+  for( struct proc *pointer = proc; pointer < &proc[NPROC]; ++pointer ) result += pointer->state != UNUSED;
+  return result;
 }
