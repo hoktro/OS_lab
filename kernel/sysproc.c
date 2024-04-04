@@ -74,7 +74,27 @@ sys_sleep(void)
 int
 sys_pgaccess(void)
 {
-  // lab pgtbl: your code here.
+  uint64 src;   argaddr( 0, &src );
+  int sz;         argint( 1, &sz );
+  uint64 dst;   argaddr( 2, &dst );
+
+  // Out of virtual address scope
+  if( src >= MAXVA || dst >= MAXVA ) return -1;
+
+  pte_t *pte;
+  uint64 pgmask = 0;
+  struct proc *p = myproc();
+
+  for( int _ = 0; _ < sz; ++_ ) {
+    if( ( pte = walk( p->pagetable, src + _ * PGSIZE, 0 ) ) == 0 ) return -1;
+    if( *pte & PTE_A ) {
+      // If this page is accessed
+      pgmask |= ( 1 << _ );   // Mark this page to pgmask
+      *pte ^= PTE_A;          // Off bit PTE_A for this page
+    }
+  }
+
+  if( copyout( p->pagetable, dst, (char*)&pgmask, sizeof(pgmask) ) == -1 ) return -1;
   return 0;
 }
 #endif

@@ -449,3 +449,32 @@ copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
     return -1;
   }
 }
+
+// Recursively print page-table pages.
+void 
+rcsprintpgtbl(pagetable_t pagetable, int level) {
+  
+  for( int i = 0; i < 512; ++i ) {
+    pte_t pte = pagetable[i];
+    
+    // If this page is not valid, pass
+    if( !(pte & PTE_V) ) continue;
+    
+    // PTE and PA of current PTE
+    printf(".."); for( int _ = 1; _ <= level; ++_ ) printf(" ..");
+    printf("%d: pte %p pa %p\n", i, pte, PTE2PA(pte));
+
+    // If this PTE does not point to a lower-level page table, goto the next one
+    if( ( pte & ( PTE_R | PTE_W | PTE_X ) ) != 0 ) continue;
+    // else go to its child.
+    uint64 child = PTE2PA(pte);
+    rcsprintpgtbl( (pagetable_t)child, level + 1 );
+  }
+  
+}
+
+void
+vmprint(pagetable_t pagetable) {
+  printf("page table %p\n", pagetable);
+  rcsprintpgtbl( pagetable, 0 );
+}

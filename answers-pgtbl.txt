@@ -1,0 +1,39 @@
+Question 1: Which other xv6 system call(s) could be made faster using this shared page? Explain how.
+Answer: By utilizing the shared page for storing frequently accessed process-specific information, these system calls can avoid redundant kernel operations, leading to faster execution and improved performance. Additionally, by consolidating such information into a single shared page, the overhead of accessing multiple data structures in the kernel can be minimized, further enhancing efficiency.
+
+Question 2: 
+
+a. Explain the output of vmprint in terms of Fig 3-4 from the text. What does page 0 contain? What is in page 2? 
+
+Answer: Refering to xv6 book and exec() function in kernel/exec.c, at first system allocate memory for load ELF file so that page 0 of course is for ELF and program header. Additionally, when read ELF file:
+
+hoktro@LAPTOP-B4NE5N4Q:~/xv6-labs-2023$ readelf -l ./user/_init
+
+Elf file type is EXEC (Executable file)
+Entry point 0xf8
+There are 4 program headers, starting at offset 64
+
+Program Headers:
+  Type           Offset             VirtAddr           PhysAddr
+                 FileSiz            MemSiz              Flags  Align
+  RISCV_ATTRIBUT 0x0000000000006ce4 0x0000000000000000 0x0000000000000000
+                 0x0000000000000033 0x0000000000000000  R      0x1
+  LOAD           0x0000000000001000 0x0000000000000000 0x0000000000000000
+                 0x0000000000001000 0x0000000000001000  R E    0x1000
+  LOAD           0x0000000000002000 0x0000000000001000 0x0000000000001000
+                 0x0000000000000010 0x0000000000000030  RW     0x1000
+  GNU_STACK      0x0000000000000000 0x0000000000000000 0x0000000000000000
+                 0x0000000000000000 0x0000000000000000  RW     0x10
+
+ Section to Segment mapping:
+  Segment Sections...
+   00     .riscv.attributes 
+   01     .text .rodata 
+   02     .data .bss 
+   03     
+
+Base on the memsize of load, we can sure that total size is within a page size. Therefore, page 1 is for guard page and page 2 is served as the Kernel stack.
+
+b. When running in user mode, could the process read/write the memory mapped by page 1? What does the third to last page contain?
+
+Answer: When the program is running in user mode, it cannot read or write page 1 by the reason that that page is used to protect page2 (ie stack page) from being accessed by users.
